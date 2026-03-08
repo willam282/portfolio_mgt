@@ -10,4 +10,3 @@ yfinance==0.2.65
 pandas
 requests
 humanize
-django-contrib-humanize

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Transactions — Portfolio Manager{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h1>Transactions</h1>
+        <p class="text-muted-custom">All buy &amp; sell activity across portfolios</p>
+    </div>
+    <a href="{% url 'transaction_add' %}" class="btn btn-accent" id="btn-new-transaction">
+        <i class="bi bi-plus-lg me-1"></i>Add Transaction
+    </a>
+</div>
+
+<div class="card data-card">
+    <div class="card-body p-0">
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Asset</th>
+                        <th>Portfolio</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-end">Total</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                    <tr>
+                        <td>{{ txn.date|date:"M d, Y" }}</td>
+                        <td>
+                            <span
+                                class="badge {% if txn.transaction_type == 'BUY' %}bg-gain{% else %}bg-loss{% endif %}">
+                                {{ txn.transaction_type }}
+                            </span>
+                        </td>
+                        <td><strong>{{ txn.asset.symbol }}</strong> <span
+                                class="text-muted-custom d-none d-md-inline">{{ txn.asset.name }}</span></td>
+                        <td>
+                            <a href="{% url 'portfolio_detail' txn.portfolio.pk %}" class="link-accent">
+                                {{ txn.portfolio.name }}
+                            </a>
+                        </td>
+                        <td class="text-end">{{ txn.quantity|floatformat:2 }}</td>
+                        <td class="text-end">${{ txn.price|floatformat:2 }}</td>
+                        <td class="text-end">${{ txn.total_amount|floatformat:2|intcomma }}</td>
+                        <td class="text-muted-custom">{{ txn.notes|truncatewords:8 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No transactions yet. <a href="{% url 'transaction_add' %}">Record your first trade</a>.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

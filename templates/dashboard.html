@@ -1,0 +1,176 @@
+﻿{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Dashboard — Portfolio Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p class="text-muted-custom">Your portfolio overview at a glance</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card" id="card-total-value">
+            <div class="card-body">
+                <div class="stat-icon bg-accent-indigo">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Value</span>
+                    <span class="stat-value">${{ total_value|floatformat:2|intcomma }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card" id="card-gain-loss">
+            <div class="card-body">
+                <div class="stat-icon {% if total_gain >= 0 %}bg-accent-green{% else %}bg-accent-red{% endif %}">
+                    <i class="bi {% if total_gain >= 0 %}bi-graph-up-arrow{% else %}bi-graph-down-arrow{% endif %}"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Gain / Loss</span>
+                    <span class="stat-value {% if total_gain >= 0 %}text-gain{% else %}text-loss{% endif %}">
+                        {{ gain_sign }}{{ total_gain|floatformat:2|intcomma|cut:"-" }}
+                        <small>({{ gain_pct|floatformat:1 }}%)</small>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card" id="card-assets">
+            <div class="card-body">
+                <div class="stat-icon bg-accent-amber">
+                    <i class="bi bi-pie-chart"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Assets Held</span>
+                    <span class="stat-value">{{ total_assets }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card" id="card-portfolios">
+            <div class="card-body">
+                <div class="stat-icon bg-accent-cyan">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Portfolios</span>
+                    <span class="stat-value">{{ portfolio_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card chart-card" id="chart-growth-card">
+            <div class="card-header">
+                <h2 class="card-title-custom">Portfolio Growth</h2>
+            </div>
+            <div class="card-body">
+                <canvas id="growthChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card chart-card" id="chart-allocation-card">
+            <div class="card-header">
+                <h2 class="card-title-custom">Asset Allocation</h2>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="allocationChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card data-card" id="recent-transactions-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title-custom mb-0">Recent Transactions</h2>
+        <a href="{% url 'transaction_add' %}" class="btn btn-sm btn-accent" id="btn-add-transaction">
+            <i class="bi bi-plus-lg me-1"></i>Add
+        </a>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_transactions %}
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Asset</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                        <th>Portfolio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in recent_transactions %}
+                    <tr>
+                        <td>{{ txn.date|date:"M d, Y" }}</td>
+                        <td>
+                            <span
+                                class="badge {% if txn.transaction_type == 'BUY' %}bg-gain{% else %}bg-loss{% endif %}">
+                                {{ txn.transaction_type }}
+                            </span>
+                        </td>
+                        <td><strong>{{ txn.asset.symbol }}</strong></td>
+                        <td>{{ txn.quantity|floatformat:2 }}</td>
+                        <td>${{ txn.price|floatformat:2 }}</td>
+                        <td>${{ txn.total_amount|floatformat:2|intcomma }}</td>
+                        <td>{{ txn.portfolio.name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No transactions yet. <a href="{% url 'transaction_add' %}">Add your first transaction</a>.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Growth chart
+        fetch("{% url 'api_all_portfolios_history' %}")
+            .then(r => r.json())
+            .then(data => {
+                if (data.labels.length > 0) {
+                    createGrowthChart('growthChart', data.labels, data.values);
+                } else {
+                    document.getElementById('growthChart').parentElement.innerHTML =
+                        '<div class="empty-state"><i class="bi bi-bar-chart-line"></i><p>No portfolio history data yet.</p></div>';
+                }
+            });
+
+        // Allocation chart
+        fetch("{% url 'api_all_allocation' %}")
+            .then(r => r.json())
+            .then(data => {
+                if (data.labels.length > 0) {
+                    createAllocationChart('allocationChart', data.labels, data.values);
+                } else {
+                    document.getElementById('allocationChart').parentElement.innerHTML =
+                        '<div class="empty-state"><i class="bi bi-pie-chart"></i><p>No holdings data yet.</p></div>';
+                }
+            });
+    });
+</script>
+{% endblock %}

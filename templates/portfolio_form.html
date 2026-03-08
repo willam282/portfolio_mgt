@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} — Portfolio Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-custom">
+            <li class="breadcrumb-item"><a href="{% url 'portfolio_list' %}">Portfolios</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+    <h1>{{ title }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card form-card">
+            <div class="card-body">
+                <form method="post" id="portfolio-form">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-accent" id="btn-submit-portfolio">
+                            <i class="bi bi-check-lg me-1"></i>Save Portfolio
+                        </button>
+                        <a href="{% url 'portfolio_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

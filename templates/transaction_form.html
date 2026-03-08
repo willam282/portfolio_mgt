@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} — Portfolio Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-custom">
+            <li class="breadcrumb-item"><a href="{% url 'transaction_list' %}">Transactions</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+    <h1>{{ title }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card form-card">
+            <div class="card-body">
+                <form method="post" id="transaction-form">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-accent" id="btn-submit-transaction">
+                            <i class="bi bi-check-lg me-1"></i>Save Transaction
+                        </button>
+                        <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const qtyInput = document.getElementById('id_quantity');
+        const commInput = document.getElementById('id_commission');
+
+        function updateCommission() {
+            const qty = parseFloat(qtyInput.value);
+            // Only auto-update if commission is empty, 0, or one of the default values
+            if (qtyInput.value !== '') {
+                const currentComm = commInput.value;
+                if (currentComm === '' || parseFloat(currentComm) === 0 || currentComm === '20.00' || currentComm === '0.88') {
+                    if (qty >= 1) {
+                        commInput.value = '20.00';
+                    } else if (qty > 0) {
+                        commInput.value = '0.88';
+                    }
+                }
+            }
+        }
+
+        if (qtyInput && commInput) {
+            qtyInput.addEventListener('input', updateCommission);
+            qtyInput.addEventListener('blur', updateCommission);
+        }
+    });
+</script>
+{% endblock %}

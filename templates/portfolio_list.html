@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Portfolios — Portfolio Manager{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h1>Portfolios</h1>
+        <p class="text-muted-custom">Manage your investment portfolios</p>
+    </div>
+    <a href="{% url 'portfolio_create' %}" class="btn btn-accent" id="btn-create-portfolio">
+        <i class="bi bi-plus-lg me-1"></i>New Portfolio
+    </a>
+</div>
+
+{% if portfolios %}
+<div class="row g-4">
+    {% for portfolio in portfolios %}
+    <div class="col-md-6 col-xl-4">
+        <a href="{% url 'portfolio_detail' portfolio.pk %}" class="card portfolio-card text-decoration-none"
+            id="portfolio-card-{{ portfolio.pk }}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h3 class="card-title-custom mb-0">{{ portfolio.name }}</h3>
+                    <span class="badge bg-accent-indigo-subtle">{{ portfolio.get_holdings|length }} assets</span>
+                </div>
+                {% if portfolio.description %}
+                <p class="text-muted-custom small mb-3">{{ portfolio.description|truncatewords:20 }}</p>
+                {% endif %}
+                <div class="portfolio-stats">
+                    <div>
+                        <span class="stat-label">Value</span>
+                        <span class="stat-value-sm">${{ portfolio.total_value|floatformat:2|intcomma }}</span>
+                    </div>
+                    <div>
+                        <span class="stat-label">Gain/Loss</span>
+                        <span
+                            class="stat-value-sm {% if portfolio.total_gain_loss >= 0 %}text-gain{% else %}text-loss{% endif %}">
+                            {{ portfolio.gain_loss_pct_sign }}{{ portfolio.total_gain_loss_pct|floatformat:1|cut:"-" }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted-custom small">
+                Created {{ portfolio.created_at|date:"M d, Y" }}
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-briefcase"></i>
+            <p>No portfolios yet. <a href="{% url 'portfolio_create' %}">Create your first portfolio</a>.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

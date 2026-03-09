@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.venv
+venv
+db.sqlite3
+/staticfiles
+__pycache__
+*.pyc
+.dockerignore
+Dockerfile
+render.yaml
+Procfile

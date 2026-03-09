@@ -5,7 +5,7 @@ psycopg2-binary==2.9.11
 gunicorn==25.1.0
 whitenoise==6.12.0
 django-crispy-forms==2.6
-crispy-bootstrap5==2.1
+crispy-bootstrap5==2026.3
 yfinance==0.2.65
 pandas
 requests
